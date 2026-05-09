@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { env } from './config/env';
 import { authRouter } from './modules/auth/auth.routes';
+import { usersRouter } from './modules/users/users.routes';
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
 
@@ -16,6 +17,7 @@ app.get('/api/v1/health', (_req, res) => {
 });
 
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1', usersRouter);
 
 app.use(notFound);
 app.use(errorHandler);
