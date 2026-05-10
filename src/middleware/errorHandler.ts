@@ -12,6 +12,9 @@ export function errorHandler(
   _next: NextFunction,
 ): void {
   const status = err.status ?? 500;
+  if (status === 500) {
+    console.error('[500]', err);
+  }
   const message =
     env.NODE_ENV === 'production' && status === 500
       ? 'Internal server error'
