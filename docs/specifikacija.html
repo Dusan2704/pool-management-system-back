@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PoolBuddy – Tehnička specifikacija</title>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 10.5pt; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #1a1a1a;
+    line-height: 1.65;
+    background: #fff;
+  }
+
+  /* ── Layout ── */
+  .page { max-width: 780px; margin: 0 auto; padding: 32px 48px; }
+
+  /* ── Typography ── */
+  h1 { font-size: 2.2rem; font-weight: 700; color: #1d4ed8; margin-bottom: 6px; }
+  h2 { font-size: 1.35rem; font-weight: 700; color: #1e40af; margin: 36px 0 12px;
+       padding-bottom: 6px; border-bottom: 2px solid #dbeafe; }
+  h3 { font-size: 1.05rem; font-weight: 600; color: #1e3a8a; margin: 22px 0 8px; }
+  h4 { font-size: 0.95rem; font-weight: 600; color: #374151; margin: 14px 0 6px; }
+  p  { margin-bottom: 10px; }
+  ul, ol { padding-left: 22px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+  strong { font-weight: 600; }
+  code {
+    font-family: 'Consolas', 'Cascadia Code', monospace;
+    font-size: 0.88em;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  /* ── Cover page ── */
+  .cover {
+    min-height: 96vh;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    text-align: center; gap: 12px;
+  }
+  .cover-logo {
+    width: 72px; height: 72px;
+    background: #1d4ed8; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .cover-logo svg { width: 40px; height: 40px; }
+  .cover h1 { font-size: 2.8rem; }
+  .cover .subtitle { font-size: 1.15rem; color: #4b5563; }
+  .cover .meta { font-size: 0.9rem; color: #6b7280; margin-top: 24px; }
+  .cover .meta span { display: block; margin-bottom: 4px; }
+
+  /* ── Table of contents ── */
+  .toc { list-style: none; padding: 0; }
+  .toc li { display: flex; justify-content: space-between;
+             border-bottom: 1px dotted #d1d5db; padding: 5px 0; font-size: 0.97rem; }
+  .toc li.toc-h2 { font-weight: 600; margin-top: 4px; }
+  .toc li.toc-h3 { padding-left: 20px; font-size: 0.93rem; color: #4b5563; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.9rem; }
+  th { background: #eff6ff; color: #1e3a8a; text-align: left;
+       padding: 8px 10px; border: 1px solid #bfdbfe; font-weight: 600; }
+  td { padding: 7px 10px; border: 1px solid #e2e8f0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+
+  /* ── API method badges ── */
+  .method {
+    display: inline-block; font-size: 0.75rem; font-weight: 700;
+    padding: 2px 7px; border-radius: 4px; font-family: monospace;
+    margin-right: 6px; letter-spacing: 0.03em;
+  }
+  .GET    { background: #dcfce7; color: #166534; }
+  .POST   { background: #dbeafe; color: #1e40af; }
+  .PATCH  { background: #fef9c3; color: #854d0e; }
+  .DELETE { background: #fee2e2; color: #991b1b; }
+
+  /* ── Route row ── */
+  .route { display: flex; align-items: flex-start; gap: 8px;
+           padding: 7px 0; border-bottom: 1px solid #f1f5f9; }
+  .route:last-child { border-bottom: none; }
+  .route-path { font-family: monospace; font-size: 0.87rem; color: #1e293b; flex: 1; }
+  .route-desc { font-size: 0.87rem; color: #475569; flex: 1.6; }
+  .auth-badge {
+    font-size: 0.72rem; font-weight: 600; padding: 2px 6px;
+    border-radius: 10px; white-space: nowrap;
+  }
+  .auth-public  { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+  .auth-user    { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .auth-admin   { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+  /* ── Info boxes ── */
+  .info-box {
+    background: #eff6ff; border-left: 4px solid #3b82f6;
+    border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 14px 0;
+    font-size: 0.93rem;
+  }
+  .warn-box {
+    background: #fff7ed; border-left: 4px solid #f97316;
+    border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 14px 0;
+    font-size: 0.93rem;
+  }
+
+  /* ── Diagram container ── */
+  .diagram {
+    border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 16px; margin: 16px 0; background: #fafafa;
+    text-align: center;
+  }
+  .diagram img, .diagram svg { max-width: 100%; height: auto; }
+  .diagram-caption { font-size: 0.82rem; color: #6b7280; margin-top: 8px; font-style: italic; }
+
+  /* ── Chip ── */
+  .chip {
+    display: inline-block; background: #e0f2fe; color: #075985;
+    border-radius: 20px; padding: 2px 10px; font-size: 0.83rem;
+    font-weight: 600; margin: 2px;
+  }
+  .chip.green  { background: #dcfce7; color: #166534; }
+  .chip.purple { background: #f3e8ff; color: #6b21a8; }
+  .chip.orange { background: #fff7ed; color: #9a3412; }
+
+  /* ── Print ── */
+  @media print {
+    body { font-size: 10pt; }
+    .page { padding: 0; max-width: none; }
+    h2 { page-break-before: auto; }
+    .cover { min-height: 94vh; page-break-after: always; }
+    .page-break { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ═══════════════════════════════════════════
+     NASLOVNA STRANA
+═══════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">
+    <svg fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M3 10c0-1 .6-2 1.5-2.5L12 3l7.5 4.5C20.4 8 21 9 21 10v5a9 9 0 01-9 9 9 9 0 01-9-9v-5z"/>
+    </svg>
+  </div>
+  <h1>PoolBuddy</h1>
+  <p class="subtitle">Veb aplikacija za rezervaciju termina u bazenu</p>
+  <hr style="width:80px;border-color:#bfdbfe;margin:16px auto"/>
+  <p style="font-size:1rem;color:#374151;max-width:480px">
+    Tehnička specifikacija projekta — opis arhitekture, modela podataka,
+    API endpointa i implementiranih funkcionalnosti
+  </p>
+  <div class="meta">
+    <span><strong>Predmet:</strong> Praktična nastava iz internet i veb tehnologija (PIIVT)</span>
+    <span><strong>Stack:</strong> Node.js · Express · React · MySQL · TypeScript</span>
+    <span><strong>Datum:</strong> Maj 2026.</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SADRŽAJ
+═══════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2>Sadržaj</h2>
+<ul class="toc">
+  <li class="toc-h2"><span>1. Uvod i opis projekta</span><span>3</span></li>
+  <li class="toc-h2"><span>2. Tehnički stack</span><span>3</span></li>
+  <li class="toc-h3"><span>2.1 Backend</span><span>3</span></li>
+  <li class="toc-h3"><span>2.2 Frontend</span><span>3</span></li>
+  <li class="toc-h3"><span>2.3 Infrastruktura</span><span>3</span></li>
+  <li class="toc-h2"><span>3. Arhitektura sistema</span><span>4</span></li>
+  <li class="toc-h2"><span>4. Dijagram slučajeva korišćenja</span><span>5</span></li>
+  <li class="toc-h2"><span>5. Model baze podataka</span><span>6</span></li>
+  <li class="toc-h3"><span>5.1 Opis tabela</span><span>6</span></li>
+  <li class="toc-h2"><span>6. Funkcionalni opis modula</span><span>8</span></li>
+  <li class="toc-h3"><span>6.1 Autentifikacija</span><span>8</span></li>
+  <li class="toc-h3"><span>6.2 Korisnici</span><span>9</span></li>
+  <li class="toc-h3"><span>6.3 Termini</span><span>9</span></li>
+  <li class="toc-h3"><span>6.4 Rezervacije</span><span>10</span></li>
+  <li class="toc-h3"><span>6.5 CMS stranice</span><span>10</span></li>
+  <li class="toc-h2"><span>7. API referenca</span><span>11</span></li>
+  <li class="toc-h2"><span>8. Bezbednost</span><span>14</span></li>
+  <li class="toc-h2"><span>9. Frontend — stranice i rute</span><span>15</span></li>
+  <li class="toc-h2"><span>10. Validacija podataka</span><span>16</span></li>
+</ul>
+
+<!-- ═══════════════════════════════════════════
+     1. UVOD
+═══════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2>1. Uvod i opis projekta</h2>
+<p>
+  <strong>PoolBuddy</strong> je full-stack veb aplikacija za upravljanje terminima plivanja i rezervacijama u gradskom bazenu.
+  Cilj projekta je omogućiti korisnicima da online pregledaju dostupne termine, rezervišu mesta i upravljaju
+  sopstvenim rezervacijama, dok administrator ima potpunu kontrolu nad raspoređivanjem termina,
+  korisnicima i CMS sadržajem sajta.
+</p>
+<p>Aplikacija podržava tri tipa korisnika sa različitim nivoima pristupa:</p>
+<ul>
+  <li><strong>Posetilac</strong> — pregleda javne stranice, registruje nalog, prijavljuje se</li>
+  <li><strong>Korisnik</strong> — rezerviše termine, otkazuje rezervacije, menja profil</li>
+  <li><strong>Administrator</strong> — kreira/menja/otkazuje termine, upravlja korisnicima i CMS stranicama</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════
+     2. TEHNIČKI STACK
+═══════════════════════════════════════════ -->
+<h2>2. Tehnički stack</h2>
+
+<h3>2.1 Backend</h3>
+<table class="no-break">
+  <thead><tr><th>Tehnologija</th><th>Verzija</th><th>Uloga</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Node.js</strong></td><td>20 LTS</td><td>JavaScript runtime okruženje</td></tr>
+    <tr><td><strong>Express</strong></td><td>4.x</td><td>HTTP framework, rutiranje, middleware</td></tr>
+    <tr><td><strong>TypeScript</strong></td><td>5.x (strict)</td><td>Statičko tipiziranje, kompajliranje</td></tr>
+    <tr><td><strong>mysql2/promise</strong></td><td>3.x</td><td>Async MySQL drajver sa connection pool-om</td></tr>
+    <tr><td><strong>jsonwebtoken</strong></td><td>9.x</td><td>Generisanje i verifikacija JWT tokena</td></tr>
+    <tr><td><strong>bcryptjs</strong></td><td>2.x</td><td>Heširanje lozinki (10 rundi)</td></tr>
+    <tr><td><strong>zod</strong></td><td>3.x</td><td>Schema validacija tela zahteva</td></tr>
+    <tr><td><strong>uuid</strong></td><td>9.x</td><td>Generisanje UUID v4 primarnih ključeva</td></tr>
+    <tr><td><strong>express-rate-limit</strong></td><td>7.x</td><td>Zaštita od brute-force napada na auth rute</td></tr>
+    <tr><td><strong>cors</strong></td><td>2.x</td><td>Cross-origin politika</td></tr>
+    <tr><td><strong>dotenv</strong></td><td>16.x</td><td>Upravljanje environment varijablama</td></tr>
+  </tbody>
+</table>
+
+<h3>2.2 Frontend</h3>
+<table class="no-break">
+  <thead><tr><th>Tehnologija</th><th>Verzija</th><th>Uloga</th></tr></thead>
+  <tbody>
+    <tr><td><strong>React</strong></td><td>18.x</td><td>UI biblioteka, CSR (client-side rendering)</td></tr>
+    <tr><td><strong>Vite</strong></td><td>5.x</td><td>Build alat i dev server sa HMR</td></tr>
+    <tr><td><strong>TypeScript</strong></td><td>5.x (strict)</td><td>Tipiziranje komponenti i API sloja</td></tr>
+    <tr><td><strong>React Router</strong></td><td>6.x</td><td>Deklarativno rutiranje, zaštićene rute</td></tr>
+    <tr><td><strong>Axios</strong></td><td>1.x</td><td>HTTP klijent, request/response interceptori</td></tr>
+    <tr><td><strong>React Hook Form</strong></td><td>7.x</td><td>Upravljanje formama bez nepotrebnih re-rendera</td></tr>
+    <tr><td><strong>Zod</strong></td><td>3.x</td><td>Validacija formi (deli šeme sa backendom)</td></tr>
+    <tr><td><strong>Tailwind CSS</strong></td><td>3.x</td><td>Utility-first CSS framework</td></tr>
+  </tbody>
+</table>
+
+<h3>2.3 Infrastruktura</h3>
+<ul>
+  <li><strong>Baza podataka:</strong> MySQL 8.0, pokrenuta kao Docker kontejner na portu 3307</li>
+  <li><strong>Dev proxy:</strong> Vite proxy preusmjerava <code>/api/v1/*</code> na Express server (port 3000), čime se izbegavaju CORS problemi u razvoju</li>
+  <li><strong>Okruženje:</strong> Konfiguracija kroz <code>.env</code> fajl (DB kredencijali, JWT tajne, CORS origin)</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════
+     3. ARHITEKTURA
+═══════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2>3. Arhitektura sistema</h2>
+<p>
+  Sistem je organizovan po četvoroslojnoj arhitekturi. Svaki sloj ima jasno definisanu odgovornost
+  i komunicira isključivo sa susednim slojevima.
+</p>
+
+<div class="diagram">
+  <img src="arhitektura_bazeni.svg" alt="Dijagram arhitekture sistema" />
+  <p class="diagram-caption">Slika 1 — Četvoroslojna arhitektura: korisnik, frontend, backend, baza podataka</p>
+</div>
+
+<table class="no-break">
+  <thead><tr><th>Sloj</th><th>Tehnologija</th><th>Odgovornost</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>1 — Korisnik</strong></td>
+      <td>Internet pregledač</td>
+      <td>Šalje HTTP zahteve, prikazuje HTML/CSS/JS koji vraća frontend server</td>
+    </tr>
+    <tr>
+      <td><strong>2 — Frontend</strong></td>
+      <td>React + TypeScript (CSR)</td>
+      <td>Komponente, klijentsko rutiranje, lokalna validacija formi, JWT u memoriji, Axios interceptori za automatski refresh tokena</td>
+    </tr>
+    <tr>
+      <td><strong>3 — Backend</strong></td>
+      <td>Node.js + Express + TypeScript</td>
+      <td>REST API, autentifikacija/autorizacija, poslovna logika, Zod validacija, parametrizovani SQL upiti</td>
+    </tr>
+    <tr>
+      <td><strong>4 — Baza podataka</strong></td>
+      <td>MySQL 8.0 (Docker)</td>
+      <td>Trajno čuvanje podataka, FK ograničenja, BEFORE INSERT okidači (treći sloj validacije)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Struktura backend modula</h3>
+<p>Backend prati modularnu organizaciju, gde svaki domenski modul sadrži četiri fajla:</p>
+<ul>
+  <li><code>*.schema.ts</code> — Zod šeme za validaciju ulaznih podataka</li>
+  <li><code>*.service.ts</code> — poslovna logika i DB operacije</li>
+  <li><code>*.controller.ts</code> — Express handler funkcije</li>
+  <li><code>*.routes.ts</code> — definicija ruta sa middleware lancima</li>
+</ul>
+<p>Moduli: <strong>auth</strong>, <strong>users</strong>, <strong>sessions</strong>, <strong>reservations</strong>, <strong>pages</strong></p>
+
+<!-- ═══════════════════════════════════════════
+     4. USE CASE
+═══════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2>4. Dijagram slučajeva korišćenja</h2>
+
+<div class="diagram">
+  <img src="use_case_bazeni.svg" alt="Use case dijagram" />
+  <p class="diagram-caption">Slika 2 — Aktori i slučajevi korišćenja sistema</p>
+</div>
+
+<table class="no-break">
+  <thead><tr><th>Aktor</th><th>Slučajevi korišćenja</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Posetilac</strong></td>
+      <td>Pregled javnih stranica (CMS), Registracija naloga, Prijava na portal</td>
+    </tr>
+    <tr>
+      <td><strong>Korisnik</strong></td>
+      <td>
+        Pregled slobodnih termina (sa filterom po datumu),
+        Rezervacija termina,
+        Pregled sopstvenih rezervacija,
+        Otkazivanje rezervacije,
+        Izmena profila (kontakt podaci, lozinka)
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Administrator</strong></td>
+      <td>
+        Kreiranje / izmena / otkazivanje / brisanje termina,
+        Pregled rezervacija po terminu,
+        Lista korisnika i aktivacija/deaktivacija naloga,
+        Kreiranje / izmena / brisanje CMS stranica,
+        Promena statusa objave stranice
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════
+     5. BAZA PODATAKA
+═══════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2>5. Model baze podataka</h2>
+
+<div class="diagram">
+  <img src="erd_bazeni.svg" alt="ERD dijagram baze podataka" />
+  <p class="diagram-caption">Slika 3 — ER dijagram baze podataka (bazeni)</p>
+</div>
+
+<h3>5.1 Opis tabela</h3>
+
+<h4>Tabela <code>user</code></h4>
+<table class="no-break">
+  <thead><tr><th>Kolona</th><th>Tip</th><th>Opis</th></tr></thead>
+  <tbody>
+    <tr><td><code>user_id</code></td><td>VARCHAR(36) PK</td><td>UUID v4, generiše se u aplikaciji</td></tr>
+    <tr><td><code>first_name</code></td><td>VARCHAR(50) NN</td><td>Ime korisnika</td></tr>
+    <tr><td><code>last_name</code></td><td>VARCHAR(50) NN</td><td>Prezime korisnika</td></tr>
+    <tr><td><code>email</code></td><td>VARCHAR(120) UQ NN</td><td>Email adresa, jedinstven identifikator za prijavu</td></tr>
+    <tr><td><code>phone</code></td><td>VARCHAR(20) NN</td><td>Broj telefona (+381...)</td></tr>
+    <tr><td><code>password_hash</code></td><td>VARCHAR(255) NN</td><td>bcrypt hash lozinke (10 rundi)</td></tr>
+    <tr><td><code>role</code></td><td>ENUM('admin','user')</td><td>Uloga korisnika, default: 'user'</td></tr>
+    <tr><td><code>is_active</code></td><td>TINYINT(1)</td><td>Aktivnost naloga, default: 1. Deaktiviran korisnik ne može da se prijavi</td></tr>
+    <tr><td><code>created_at</code></td><td>DATETIME</td><td>Vreme registracije</td></tr>
+    <tr><td><code>updated_at</code></td><td>DATETIME</td><td>Automatski se ažurira pri svakoj izmeni (ON UPDATE NOW())</td></tr>
+  </tbody>
+</table>
+
+<h4>Tabela <code>pool_session</code></h4>
+<table class="no-break">
+  <thead><tr><th>Kolona</th><th>Tip</th><th>Opis</th></tr></thead>
+  <tbody>
+    <tr><td><code>session_id</code></td><td>VARCHAR(36) PK</td><td>UUID v4</td></tr>
+    <tr><td><code>session_date</code></td><td>DATE NN</td><td>Datum termina</td></tr>
+    <tr><td><code>start_time</code></td><td>TIME NN</td><td>Vreme početka (HH:MM)</td></tr>
+    <tr><td><code>end_time</code></td><td>TIME NN</td><td>Vreme završetka; mora biti veće od start_time</td></tr>
+    <tr><td><code>capacity</code></td><td>INT NN</td><td>Maksimalan broj rezervacija</td></tr>
+    <tr><td><code>status</code></td><td>ENUM('open','cancelled')</td><td>Status termina; otkazivanje kaskadno otkazuje rezervacije</td></tr>
+    <tr><td><code>created_by</code></td><td>VARCHAR(36) FK→user</td><td>Administrator koji je kreirao termin</td></tr>
+    <tr><td><code>created_at / updated_at</code></td><td>DATETIME</td><td>Vremenske oznake</td></tr>
+  </tbody>
+</table>
+
+<h4>Tabela <code>reservation</code></h4>
+<table class="no-break">
+  <thead><tr><th>Kolona</th><th>Tip</th><th>Opis</th></tr></thead>
+  <tbody>
+    <tr><td><code>reservation_id</code></td><td>VARCHAR(36) PK</td><td>UUID v4</td></tr>
+    <tr><td><code>user_id</code></td><td>VARCHAR(36) FK→user NN</td><td>Korisnik koji je napravio rezervaciju</td></tr>
+    <tr><td><code>session_id</code></td><td>VARCHAR(36) FK→pool_session NN</td><td>Termin za koji važi rezervacija</td></tr>
+    <tr><td><code>status</code></td><td>ENUM('active','cancelled_by_user','cancelled_by_admin')</td><td>Status rezervacije</td></tr>
+    <tr><td><code>reserved_at</code></td><td>DATETIME</td><td>Vreme kreiranja rezervacije</td></tr>
+    <tr><td><code>cancelled_at</code></td><td>DATETIME NULL</td><td>Vreme otkazivanja</td></tr>
+    <tr><td><code>cancelled_by</code></td><td>VARCHAR(36) FK→user NULL</td><td>Ko je otkazao (korisnik ili admin)</td></tr>
+  </tbody>
+</table>
+<div class="info-box">
+  <strong>Ograničenje:</strong> <code>UNIQUE KEY uq_user_session (user_id, session_id)</code> — jedan korisnik može imati
+  samo jedan red po terminu. Ponovljena rezervacija nakon otkazivanja se rešava reaktivacijom
+  postojećeg reda (UPDATE, a ne INSERT), čime se izbegava kršenje unique ograničenja.
+</div>
+
+<h4>Tabela <code>page</code></h4>
+<table class="no-break">
+  <thead><tr><th>Kolona</th><th>Tip</th><th>Opis</th></tr></thead>
+  <tbody>
+    <tr><td><code>page_id</code></td><td>VARCHAR(36) PK</td><td>UUID v4</td></tr>
+    <tr><td><code>slug</code></td><td>VARCHAR(80) UQ NN</td><td>URL identifikator (format: <code>mala-slova-sa-crticom</code>)</td></tr>
+    <tr><td><code>title</code></td><td>VARCHAR(120) NN</td><td>Naslov stranice</td></tr>
+    <tr><td><code>content</code></td><td>LONGTEXT</td><td>HTML sadržaj stranice</td></tr>
+    <tr><td><code>is_published</code></td><td>TINYINT(1)</td><td>1 = objavljena, 0 = skrivena (draft)</td></tr>
+    <tr><td><code>sort_order</code></td><td>INT</td><td>Redosled prikaza u listi, default: 0</td></tr>
+    <tr><td><code>updated_by</code></td><td>VARCHAR(36) FK→user NULL</td><td>Administrator koji je poslednji izmenio stranicu</td></tr>
+    <tr><td><code>created_at / updated_at</code></td><td>DATETIME</td><td>Vremenske oznake</td></tr>
+  </tbody>
+</table>
+
+<h4>Tabela <code>refresh_token</code></h4>
+<table class="no-break">
+  <thead><tr><th>Kolona</th><th>Tip</th><th>Opis</th></tr></thead>
+  <tbody>
+    <tr><td><code>token_id</code></td><td>VARCHAR(36) PK</td><td>UUID v4</td></tr>
+    <tr><td><code>user_id</code></td><td>VARCHAR(36) FK→user</td><td>Vlasnik tokena (ON DELETE CASCADE)</td></tr>
+    <tr><td><code>token_hash</code></td><td>VARCHAR(255) UQ</td><td>SHA-256 heš refresh tokena — nije u bazi u čistom tekstu</td></tr>
+    <tr><td><code>expires_at</code></td><td>DATETIME</td><td>Datum isteka (7 dana od izdavanja)</td></tr>
+    <tr><td><code>revoked_at</code></td><td>DATETIME NULL</td><td>Vreme opoziva; NULL = token aktivan</td></tr>
+    <tr><td><code>created_at</code></td><td>DATETIME</td><td>Vreme izdavanja</td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════
+     6. FUNKCIONALNI OPIS
+═══════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2>6. Funkcionalni opis modula</h2>
+
+<h3>6.1 Autentifikacija (<code>auth</code>)</h3>
+<p>
+  Sistem koristi <strong>JWT dual-token</strong> strategiju:
+  kratkotrajan <strong>access token</strong> (15 minuta) i dugotrajan
+  <strong>refresh token</strong> (7 dana) sa rotacijom pri svakoj upotrebi.
+</p>
+<ul>
+  <li><strong>Registracija</strong> — korisnik unosi ime, prezime, email, telefon i lozinku.
+    Email mora biti jedinstven. Lozinka se heši bcrypt algoritmom (10 rundi) pre čuvanja.</li>
+  <li><strong>Prijava</strong> — validira se email i lozinka, a zatim se izdaje par tokena.
+    Refresh token se čuva u <code>localStorage</code> (heš u bazi), access token samo u React state-u.</li>
+  <li><strong>Obnova tokena</strong> — pri pokretanju aplikacije i pri svakom 401 odgovoru,
+    frontend automatski šalje refresh token i dobija novi par. Stari refresh token se opoziva
+    (token rotation). Race condition pri konkurentnim pozivima rešen je mutex queue mehanizmom
+    u <code>AuthContext</code> i dodavanjem <code>jti</code> (UUID) klajma u svaki refresh token.</li>
+  <li><strong>Odjavljivanje</strong> — refresh token se opoziva na serveru (postavljanje <code>revoked_at</code>),
+    access token i localStorage se brišu na frontendu.</li>
+</ul>
+
+<h3>6.2 Korisnici (<code>users</code>)</h3>
+<ul>
+  <li><strong>Pregled profila</strong> — prijavljeni korisnik vidi sve sopstvene podatke.</li>
+  <li><strong>Izmena kontakt podataka</strong> — mogu se menjati ime, prezime, email i telefon.
+    Proverava se da novi email nije zauzet. Lozinka se menja odvojenom akcijom.</li>
+  <li><strong>Promena lozinke</strong> — korisnik unosi staru lozinku (verifikuje se bcrypt-om)
+    i novu lozinku sa potvrdom.</li>
+  <li><strong>Admin: lista korisnika</strong> — administrator vidi sve korisnike sa statusom naloga.</li>
+  <li><strong>Admin: aktivacija/deaktivacija</strong> — administrator može da deaktivira korisnički nalog.
+    Administrator ne može da deaktivira sopstveni nalog.</li>
+</ul>
+
+<h3>6.3 Termini (<code>sessions</code>)</h3>
+<ul>
+  <li><strong>Pregled slobodnih termina (korisnik)</strong> — prikazuju se samo otvoreni termini
+    koji nisu prošli i imaju slobodnih mesta. Dostupan filter po datumu (od / do).</li>
+  <li><strong>Admin: lista svih termina</strong> — tabela svih termina uključujući otkazane,
+    sa brojem aktivnih rezervacija.</li>
+  <li><strong>Admin: kreiranje termina</strong> — unose se datum, vreme početka, vreme kraja (mora
+    biti posle početka) i kapacitet. Validacija na tri nivoa: frontend (Zod + React Hook Form),
+    backend (Zod middleware) i baza (BEFORE INSERT okidač).</li>
+  <li><strong>Admin: izmena termina</strong> — isti podaci kao pri kreiranju, moguće samo za
+    otvorene termine.</li>
+  <li><strong>Admin: otkazivanje termina</strong> — status termina se menja na <code>cancelled</code>,
+    a sve aktivne rezervacije tog termina se kaskadno menjaju na <code>cancelled_by_admin</code>
+    unutar jedne SQL transakcije.</li>
+  <li><strong>Admin: brisanje termina</strong> — moguće samo ako termin nema aktivnih rezervacija.</li>
+  <li><strong>Admin: pregled rezervacija po terminu</strong> — lista korisnika sa statusom rezervacije
+    i vremenom rezervacije.</li>
+</ul>
+
+<h3>6.4 Rezervacije (<code>reservations</code>)</h3>
+<ul>
+  <li><strong>Kreiranje rezervacije</strong> — korisnik rezerviše termin. Sistem proverava:
+    termin postoji, status je 'open', termin nije prošao, ima slobodnih mesta,
+    korisnik nema aktivnu rezervaciju za isti termin.
+    Ako postoji otkazana rezervacija za isti termin, reaktivira se (UPDATE)
+    umesto INSERT-a, čime se poštuje unique ograničenje.</li>
+  <li><strong>Pregled mojih rezervacija</strong> — korisnik vidi sve sopstvene rezervacije
+    podeljene u aktivne i otkazane, sa statusom termina i vremenima.</li>
+  <li><strong>Otkazivanje rezervacije</strong> — moguće samo za aktivne rezervacije budućih termina.
+    Proverava se vlasništvo (403 ako pokušava drugi korisnik). Status se menja na
+    <code>cancelled_by_user</code>.</li>
+</ul>
+
+<h3>6.5 CMS stranice (<code>pages</code>)</h3>
+<ul>
+  <li><strong>Javne stranice (bez prijave)</strong> — lista objavljenih stranica sortirana po
+    <code>sort_order</code>, i prikaz pojedinačne stranice po slug-u. HTML sadržaj se renderuje direktno.</li>
+  <li><strong>Admin: lista svih stranica</strong> — prikazuje i objavljene i skrivene stranice.</li>
+  <li><strong>Admin: kreiranje / izmena stranice</strong> — unose se naslov, slug (mora biti u formatu
+    <code>mala-slova-sa-crticom</code> i jedinstven), HTML sadržaj, redosled i status objave.</li>
+  <li><strong>Admin: promena statusa objave</strong> — klikom na status badge u tabeli, stranica se
+    trenutno objavljuje ili skriva bez otvaranja modala.</li>
+  <li><strong>Admin: brisanje stranice</strong> — potvrda pre brisanja.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════
+     7. API REFERENCA
+═══════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2>7. API referenca</h2>
+<p>
+  Sve rute imaju prefiks <code>/api/v1</code>. Zahtevi i odgovori su u JSON formatu.
+  Greške vraćaju <code>{ "message": "..." }</code> sa odgovarajućim HTTP statusom.
+</p>
+<div class="info-box">
+  <strong>Autentifikacija:</strong> zaštićene rute zahtevaju <code>Authorization: Bearer &lt;access_token&gt;</code> zaglavlje.
+  Admin rute zahtevaju i ulogu <code>role = 'admin'</code>.
+</div>
+
+<h3>Autentifikacija <code>/auth</code></h3>
+<div class="no-break">
+<div class="route">
+  <span class="method POST">POST</span>
+  <span class="route-path">/auth/register</span>
+  <span class="route-desc">Registracija novog korisnika. Telo: <code>first_name, last_name, email, phone, password</code></span>
+  <span class="auth-badge auth-public">javno</span>
+</div>
+<div class="route">
+  <span class="method POST">POST</span>
+  <span class="route-path">/auth/login</span>
+  <span class="route-desc">Prijava. Telo: <code>email, password</code>. Vraća: <code>access_token, refresh_token</code></span>
+  <span class="auth-badge auth-public">javno</span>
+</div>
+<div class="route">
+  <span class="method POST">POST</span>
+  <span class="route-path">/auth/refresh</span>
+  <span class="route-desc">Obnova tokena. Telo: <code>refresh_token</code>. Vraća novi par tokena, opoziva stari</span>
+  <span class="auth-badge auth-public">javno</span>
+</div>
+<div class="route">
+  <span class="method POST">POST</span>
+  <span class="route-path">/auth/logout</span>
+  <span class="route-desc">Odjavljivanje. Telo: <code>refresh_token</code>. Opoziva refresh token u bazi</span>
+  <span class="auth-badge auth-user">korisnik</span>
+</div>
+</div>
+
+<h3>Korisnici</h3>
+<div class="no-break">
+<div class="route">
+  <span class="method GET">GET</span>
+  <span class="route-path">/users/me</span>
+  <span class="route-desc">Profil prijavljenog korisnika</span>
+  <span class="auth-badge auth-user">korisnik</span>
+</div>
+<div class="route">
+  <span class="method PATCH">PATCH</span>
+  <span class="route-path">/users/me</span>
+  <span class="route-desc">Izmena profila. Opciona polja: <code>first_name, last_name, email, phone, current_password, new_password</code></span>
+  <span class="auth-badge auth-user">korisnik</span>
+</div>
+<div class="route">
+  <span class="method GET">GET</span>
+  <span class="route-path">/admin/users</span>
+  <span class="route-desc">Lista svih korisnika sa statusom naloga</span>
+  <span class="auth-badge auth-admin">admin</span>
+</div>
+<div class="route">
+  <span class="method PATCH">PATCH</span>
+  <span class="route-path">/admin/users/:id</span>
+  <span class="route-desc">Aktivacija / deaktivacija korisničkog naloga. Telo: <code>is_active: boolean</code></span>
+  <span class="auth-badge auth-admin">admin</span>
+</div>
+</div>
+
+<h3>Termini</h3>
+<div class="no-break">
+<div class="route">
+  <span class="method GET">GET</span>
+  <span class="route-path">/sessions</span>
+  <span class="route-desc">Otvoreni termini sa slobodnim mestima koji nisu prošli. Query: <code>?from=YYYY-MM-DD&amp;to=YYYY-MM-DD</code></span>
+  <span class="auth-badge auth-user">korisnik</span>
+</div>
+<div class="route">
+  <span class="method GET">GET</span>
+  <span class="route-path">/sessions/:id</span>
+  <span class="route-desc">Detalji jednog termina</span>
+  <span class="auth-badge auth-user">korisnik</span>
+</div>
+<div class="route">
+  <span class="method GET">GET</span>
+  <span class="route-path">/admin/sessions</span>
+  <span class="route-desc">Svi termini (uključujući otkazane), sa brojem rezervacija</span>
+  <span class="auth-badge auth-admin">admin</span>
+</div>
+<div class="route">
+  <span class="method POST">POST</span>
+  <span class="route-path">/admin/sessions</span>
+  <span class="route-desc">Kreiranje termina. Telo: <code>session_date, start_time, end_time, capacity</code></span>
+  <span class="auth-badge auth-admin">admin</span>
+</div>
+<div class="route">
+  <span class="method PATCH">PATCH</span>
+  <span class="route-path">/admin/sessions/:id</span>
+  <span class="route-desc">Izmena termina (samo otvoreni termini). Ista polja kao kreiranje, sva opciona</span>
+  <span class="auth-badge auth-admin">admin</span>
+</div>
+<div class="route">
+  <span class="method POST">POST</span>
+  <span class="route-path">/admin/sessions/:id/cancel</span>
+  <span class="route-desc">Otkazivanje termina — kaskadno otkazuje sve aktivne rezervacije (transakcija)</span>
+  <span class="auth-badge auth-admin">admin</span>
+</div>
+<div class="route">
+  <span class="method DELETE">DELETE</span>
+  <span class="route-path">/admin/sessions/:id</span>
+  <span class="route-desc">Brisanje termina. Blokira se ako postoje aktivne rezervacije (409)</span>
+  <span class="auth-badge auth-admin">admin</span>
+</div>
+<div class="route">
+  <span class="method GET">GET</span>
+  <span class="route-path">/admin/sessions/:id/reservations</span>
+  <span class="route-desc">Lista svih rezervacija za dati termin (ime, email, status, vreme rezervacije)</span>
+  <span class="auth-badge auth-admin">admin</span>
+</div>
+</div>
+
+<h3>Rezervacije</h3>
+<div class="no-break">
+<div class="route">
+  <span class="method POST">POST</span>
+  <span class="route-path">/reservations</span>
+  <span class="route-desc">Kreiranje rezervacije. Telo: <code>session_id</code>. Reaktivira otkazanu ako postoji</span>
+  <span class="auth-badge auth-user">korisnik</span>
+</div>
+<div class="route">
+  <span class="method GET">GET</span>
+  <span class="route-path">/reservations/me</span>
+  <span class="route-desc">Sve rezervacije prijavljenog korisnika sa podacima o terminu, sortirane po datumu</span>
+  <span class="auth-badge auth-user">korisnik</span>
+</div>
+<div class="route">
+  <span class="method DELETE">DELETE</span>
+  <span class="route-path">/reservations/:id</span>
+  <span class="route-desc">Otkazivanje rezervacije. Moguće samo za aktivne rezervacije budućih termina</span>
+  <span class="auth-badge auth-user">korisnik</span>
+</div>
+</div>
+
+<h3>CMS stranice</h3>
+<div class="no-break">
+<div class="route">
+  <span class="method GET">GET</span>
+  <span class="route-path">/pages</span>
+  <span class="route-desc">Lista svih objavljenih stranica, sortirano po <code>sort_order</code></span>
+  <span class="auth-badge auth-public">javno</span>
+</div>
+<div class="route">
+  <span class="method GET">GET</span>
+  <span class="route-path">/pages/:slug</span>
+  <span class="route-desc">Sadržaj jedne objavljene stranice po slug identifikatoru</span>
+  <span class="auth-badge auth-public">javno</span>
+</div>
+<div class="route">
+  <span class="method GET">GET</span>
+  <span class="route-path">/admin/pages</span>
+  <span class="route-desc">Lista svih stranica (uključujući skrivene)</span>
+  <span class="auth-badge auth-admin">admin</span>
+</div>
+<div class="route">
+  <span class="method POST">POST</span>
+  <span class="route-path">/admin/pages</span>
+  <span class="route-desc">Kreiranje stranice. Telo: <code>slug, title, content, is_published, sort_order</code></span>
+  <span class="auth-badge auth-admin">admin</span>
+</div>
+<div class="route">
+  <span class="method PATCH">PATCH</span>
+  <span class="route-path">/admin/pages/:id</span>
+  <span class="route-desc">Izmena stranice. Sva polja opciona</span>
+  <span class="auth-badge auth-admin">admin</span>
+</div>
+<div class="route">
+  <span class="method DELETE">DELETE</span>
+  <span class="route-path">/admin/pages/:id</span>
+  <span class="route-desc">Brisanje stranice</span>
+  <span class="auth-badge auth-admin">admin</span>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     8. BEZBEDNOST
+═══════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2>8. Bezbednost</h2>
+
+<h3>Autentifikacija i tokeni</h3>
+<table class="no-break">
+  <thead><tr><th>Mehanizam</th><th>Detalji</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Access token (JWT)</strong></td>
+      <td>HS256, važi 15 minuta. Čuva se isključivo u React state (ne u localStorage/cookie) — nedostupan XSS napadima. Sadrži: <code>userId</code>, <code>role</code>, <code>firstName</code>, <code>lastName</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>Refresh token (JWT)</strong></td>
+      <td>HS256 + jedinstveni <code>jti</code> (UUID v4) klajm, važi 7 dana. Čuva se u <code>localStorage</code>. U bazi se čuva samo SHA-256 heš — kompromitovana baza ne otkriva tokene.</td>
+    </tr>
+    <tr>
+      <td><strong>Token rotacija</strong></td>
+      <td>Pri svakom obnavljanju, stari refresh token se opoziva i izdaje novi par. Sprečava ponovnu upotrebu ukradenog tokena.</td>
+    </tr>
+    <tr>
+      <td><strong>Lozinke</strong></td>
+      <td>bcrypt, 10 rundi soli. Nikada se ne čuvaju u čistom tekstu.</td>
+    </tr>
+    <tr>
+      <td><strong>Deaktivacija naloga</strong></td>
+      <td>Deaktiviran korisnik ne može da se prijavi ni da obnovi token (proverava se <code>is_active</code> u oba toka).</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Zaštita API-ja</h3>
+<table class="no-break">
+  <thead><tr><th>Mehanizam</th><th>Detalji</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Rate limiting</strong></td>
+      <td>Auth rute ograničene na 20 zahteva / 15 minuta po IP adresi (<code>express-rate-limit</code>). Sprečava brute-force napade na login i refresh endpointe.</td>
+    </tr>
+    <tr>
+      <td><strong>Autorizacija po ulozi</strong></td>
+      <td><code>authenticate</code> middleware verifikuje JWT. <code>requireRole('admin')</code> middleware blokira pristup admin rutama za obične korisnike (403).</td>
+    </tr>
+    <tr>
+      <td><strong>SQL injection</strong></td>
+      <td>Svi upiti koriste parametrizovane prepared statements (<code>pool.execute('... WHERE id = ?', [id])</code>). Direktna konkatenacija stringova nigde nije prisutna.</td>
+    </tr>
+    <tr>
+      <td><strong>CORS</strong></td>
+      <td>Dozvoljeni origin se definiše kroz <code>CORS_ORIGIN</code> environment varijablu.</td>
+    </tr>
+    <tr>
+      <td><strong>Vlasništvo nad resursima</strong></td>
+      <td>Korisnik može otkazati samo sopstvenu rezervaciju. Pokušaj pristupa tuđoj vraća 403.</td>
+    </tr>
+    <tr>
+      <td><strong>Mutex za refresh</strong></td>
+      <td>Axios response interceptor koristi queue mehanizam: ako je refresh već u toku, sledeći 401 čeka umesto da šalje drugi identičan zahtev. Rešava race condition koji je prouzrokovao DB unique constraint grešku.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Validacija (trostruki sloj)</h3>
+<ol>
+  <li><strong>Frontend</strong> — React Hook Form + Zod šeme: klijentska validacija pre slanja zahteva</li>
+  <li><strong>Backend</strong> — Zod middleware (<code>validate(schema)</code>): server-side validacija tela zahteva pre ulaska u service sloj</li>
+  <li><strong>Baza podataka</strong> — FK ograničenja, ENUM tipovi, BEFORE INSERT okidači (npr. provjera da <code>end_time > start_time</code>)</li>
+</ol>
+
+<!-- ═══════════════════════════════════════════
+     9. FRONTEND
+═══════════════════════════════════════════ -->
+<div class="page-break"></div>
+<h2>9. Frontend — stranice i rute</h2>
+
+<table>
+  <thead><tr><th>URL</th><th>Pristup</th><th>Opis</th></tr></thead>
+  <tbody>
+    <tr><td><code>/</code></td><td>Javno</td><td>Početna stranica: hero sekcija, prednosti, koraci, CMS stranice, CTA</td></tr>
+    <tr><td><code>/register</code></td><td>Javno</td><td>Registracija novog naloga sa validacijom forme</td></tr>
+    <tr><td><code>/login</code></td><td>Javno</td><td>Prijava, čuva refresh token u localStorage</td></tr>
+    <tr><td><code>/stranice</code></td><td>Javno</td><td>Lista svih objavljenih CMS stranica</td></tr>
+    <tr><td><code>/stranice/:slug</code></td><td>Javno</td><td>Prikaz sadržaja CMS stranice, renderuje HTML</td></tr>
+    <tr><td><code>/sessions</code></td><td>Korisnik</td><td>Lista slobodnih termina sa filterom po datumu i progress barom kapaciteta</td></tr>
+    <tr><td><code>/my-reservations</code></td><td>Korisnik</td><td>Pregled svih rezervacija (aktivne / otkazane), otkazivanje</td></tr>
+    <tr><td><code>/profile</code></td><td>Korisnik</td><td>Profil: izmena kontakt podataka i promena lozinke</td></tr>
+    <tr><td><code>/admin/sessions</code></td><td>Admin</td><td>Upravljanje terminima: tabela, modali za kreiranje/izmenu/otkazivanje/brisanje, pregled rezervacija po terminu</td></tr>
+    <tr><td><code>/admin/pages</code></td><td>Admin</td><td>Upravljanje CMS stranicama: tabela, modali za kreiranje/izmenu/brisanje, toggle objave</td></tr>
+  </tbody>
+</table>
+
+<h3>Zaštita ruta</h3>
+<ul>
+  <li><strong><code>ProtectedRoute</code></strong> — prikazuje sadržaj samo ako je korisnik prijavljen; inače redirect na <code>/login</code></li>
+  <li><strong><code>AdminRoute</code></strong> — prikazuje sadržaj samo za korisnike sa ulogom <code>admin</code>; inače 403 ekran</li>
+  <li>Dok traje inicijalni tihi refresh (obnova sesije pri učitavanju stranice), <code>ProtectedRoute</code> prikazuje prazan ekran umesto redirecta — sprečava lažni logout</li>
+</ul>
+
+<h3>Upravljanje auth stanjem (<code>AuthContext</code>)</h3>
+<ul>
+  <li>Access token čuvan u React state-u i <code>useRef</code>-u — ref omogućava da Axios interceptor uvek čita najnoviji token bez čekanja na re-render</li>
+  <li>Axios request interceptor registruje se <strong>jednom</strong> pri montiranju i čita token iz ref-a</li>
+  <li>Axios response interceptor hvata 401 odgovore, automatski poziva refresh i ponovo šalje originalni zahtev sa novim tokenom</li>
+  <li>Mount-time tihi refresh (obnova sesije) koordiniran sa interceptorom kroz zajednički <code>isRefreshingRef</code> mutex</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════
+     10. VALIDACIJA
+═══════════════════════════════════════════ -->
+<h2>10. Validacija podataka</h2>
+
+<table class="no-break">
+  <thead><tr><th>Polje</th><th>Pravilo</th></tr></thead>
+  <tbody>
+    <tr><td>Email</td><td>Validan email format, max 120 znakova, jedinstven u sistemu</td></tr>
+    <tr><td>Lozinka (registracija)</td><td>Min 8, max 72 znaka</td></tr>
+    <tr><td>Telefon</td><td>Regex <code>/^\+?[0-9]+$/</code>, min 6, max 20 znakova</td></tr>
+    <tr><td>Datum termina</td><td>Format <code>YYYY-MM-DD</code>, ne sme biti u prošlosti (provera u servisu)</td></tr>
+    <tr><td>Vreme termina</td><td>Format <code>HH:MM</code>, <code>end_time &gt; start_time</code> (frontend Zod refinement + DB okidač)</td></tr>
+    <tr><td>Kapacitet</td><td>Pozitivan ceo broj</td></tr>
+    <tr><td>Page slug</td><td>Regex <code>/^[a-z0-9]+(?:-[a-z0-9]+)*$/</code>, max 80 znakova, jedinstven</td></tr>
+    <tr><td>Sort order</td><td>Non-negativan ceo broj</td></tr>
+  </tbody>
+</table>
+
+<div class="warn-box">
+  <strong>Napomena:</strong> Sve šeme su definisane u TypeScript-u koristeći Zod biblioteku.
+  Backend i frontend dele iste validacione pravilnike, čime se osigurava konzistentnost
+  između klijentske i serverske provere podataka.
+</div>
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════ -->
+<hr style="margin:40px 0 16px;border-color:#e2e8f0"/>
+<p style="text-align:center;color:#9ca3af;font-size:0.82rem">
+  PoolBuddy — Tehnička specifikacija &nbsp;|&nbsp; PIIVT &nbsp;|&nbsp; 2026.
+</p>
+
+</div><!-- .page -->
+</body>
+</html>

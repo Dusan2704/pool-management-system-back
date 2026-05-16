@@ -19,7 +19,7 @@ interface ReservationRow extends RowDataPacket, MyReservation {}
 
 interface SessionCheckRow extends RowDataPacket {
   status: 'open' | 'cancelled';
-  session_date: string;
+  is_future: number;
   reserved_count: number;
   capacity: number;
 }
@@ -36,7 +36,8 @@ export async function createReservation(
   sessionId: string,
 ): Promise<{ reservation_id: string }> {
   const [sessionRows] = await pool.execute<SessionCheckRow[]>(
-    `SELECT ps.status, ps.session_date, ps.capacity,
+    `SELECT ps.status, ps.capacity,
+            (TIMESTAMP(ps.session_date, ps.start_time) > NOW()) AS is_future,
             COUNT(CASE WHEN r.status = 'active' THEN 1 END) AS reserved_count
      FROM pool_session ps
      LEFT JOIN reservation r ON r.session_id = ps.session_id
@@ -55,7 +56,7 @@ export async function createReservation(
     throw Object.assign(new Error('Termin je otkazan'), { status: 400 });
   }
 
-  if (new Date(session.session_date) < new Date(new Date().toDateString())) {
+  if (!session.is_future) {
     throw Object.assign(new Error('Termin je već prošao'), { status: 400 });
   }
 
