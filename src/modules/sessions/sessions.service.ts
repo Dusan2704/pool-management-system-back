@@ -81,7 +81,7 @@ export async function listOpenSessions(): Promise<PoolSession[]> {
      FROM pool_session ps
      LEFT JOIN reservation r ON r.session_id = ps.session_id
      WHERE ps.status = 'open'
-       AND ps.session_date >= CURDATE()
+       AND TIMESTAMP(ps.session_date, ps.start_time) > NOW()
      GROUP BY ps.session_id
      HAVING reserved_count < ps.capacity
      ORDER BY ps.session_date ASC, ps.start_time ASC`,
