@@ -156,6 +156,8 @@ export async function deleteSession(sessionId: string): Promise<void> {
       { status: 409 },
     );
   }
+  // FK constraint (ON DELETE RESTRICT) blokira brisanje ako postoje i otkazane rezervacije
+  await pool.execute('DELETE FROM reservation WHERE session_id = ?', [sessionId]);
   const [result] = await pool.execute<RowDataPacket[]>(
     'DELETE FROM pool_session WHERE session_id = ?',
     [sessionId],
